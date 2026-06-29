@@ -1,0 +1,27 @@
+@font-face {
+  font-family: 'sono';
+  src: url("../assets/Sono-Medium.woff2") format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-bg: #121212;
+  --color-text: #bebebe;
+  --color-text-light: #eaeaea;
+  --color-text-dark: #9e9e9e;
+  --color-highlight: #a685c5;
+}
+
+* {
+  font-family: 'sono', monospace;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+body {
+  margin-left: 15em;
+  margin-right: 15em;
+  margin-top: 50px;
+}

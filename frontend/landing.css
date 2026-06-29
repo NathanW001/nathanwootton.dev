@@ -1,0 +1,49 @@
+@import url(main.css);
+
+h1 {
+  color: var(--color-highlight)
+}
+
+p {
+  line-height: 1.6;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 8em;
+}
+
+.site-nav {
+  margin-right: 10em;
+  margin-left: 10em;
+  margin-bottom: 6em;
+}
+
+.recent-posts {
+  margin-right: 10em;
+  margin-left: 10em;
+}
+
+.nav-title {
+  color: var(--color-text-light)
+}
+
+.recent-title {
+  color: var(--color-text-light)
+}
+
+.nav-list {
+  line-height: 2.2;
+}
+
+.nav-list a {
+  color: var(--color-highlight)
+}
+
+.nav-list a:visited {
+  color: var(--color-text-dark)
+}
+
+.nav-list a:hover {
+  color: var(--color-text-light)
+}

@@ -13,15 +13,14 @@ func main() {
 	}
 
 	blog_path_response := func(w http.ResponseWriter, r *http.Request) {
-		path := r.PathValue("")
+		path := r.PathValue("blog_post")
 		fmt.Fprintf(w, "Test Response. Recieved wild card with value \"%s\"", path)
-		w.Write([]byte("Test Response.\r\n"))
 	}
 
 	mux := http.NewServeMux()
 
 	server := &http.Server{
-		Addr:           ":80",
+		Addr:           ":42309",
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,

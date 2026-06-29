@@ -1,0 +1,1 @@
+The font used is Sono, available under the SIL Open Font License (https://www.dafont.com/sono.font)
