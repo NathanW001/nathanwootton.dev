@@ -41,7 +41,7 @@ p {
 }
 
 .nav-list a:visited {
-  color: var(--color-text-dark)
+  color: var(--color-highlight-dark)
 }
 
 .nav-list a:hover {
