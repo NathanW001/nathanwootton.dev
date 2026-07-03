@@ -1,0 +1,22 @@
+@import url(main.css);
+
+h1, h2 {
+  color: var(--color-highlight)
+}
+
+p {
+  line-height: 1.6;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 8em;
+}
+
+.socials-title, .resume-title {
+  padding-left: 2em;
+}
+
+.resume-container {
+  margin-bottom: 6em;
+}

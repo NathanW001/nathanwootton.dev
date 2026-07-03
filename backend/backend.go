@@ -30,21 +30,12 @@ func main() {
 		}
 	}
 
-	query_html_response := func(w http.ResponseWriter, r *http.Request) {
-		url_path := r.URL.EscapedPath()
-		// query_info := r.URL.Query() TODO: add query
-		switch url_path {
-		case "/":
-			http.ServeFile(w, r, "../frontend/index.html")
-		case "/about/":
-			http.ServeFile(w, r, "../frontend/about.html")
-		case "/blog/":
-			http.ServeFile(w, r, "../frontend/blog.html")
-		case "/dailyleetcode/":
-			http.ServeFile(w, r, "../frontend/dailyleetcode.html")
-		default:
-			http.Error(w, "404 page not found", 404)
-		}
+	blog_html_response := func(w http.ResponseWriter, r *http.Request) {
+		// TODO server side rendering
+	}
+
+	leetcode_html_response := func(w http.ResponseWriter, r *http.Request) {
+
 	}
 
 	//CSS GENERIC RESPONSE
@@ -93,10 +84,10 @@ func main() {
 	mux.HandleFunc("GET /about/{$}", basic_html_response) // about page
 
 	mux.HandleFunc("GET /blog/{$}", basic_html_response) // blog
-	mux.HandleFunc("GET /blog/{blog_post}/{$}", query_html_response)
+	mux.HandleFunc("GET /blog/{blog_post}/{$}", blog_html_response)
 
 	mux.HandleFunc("GET /dailyleetcode/{$}", basic_html_response) // daily leetcode
-	mux.HandleFunc("GET /dailyleetcode/{date}/{$}", query_html_response)
+	mux.HandleFunc("GET /dailyleetcode/{date}/{$}", leetcode_html_response)
 
 	log.Fatal(server.ListenAndServe())
 }
