@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+type BlogPost struct {
+	Title    string
+	Subtitle string
+	Date     time.Time
+	Readmins int
+	Body     []string
+}
+
 func main() {
 	basic_response := func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Test Response.")
@@ -31,7 +39,9 @@ func main() {
 	}
 
 	blog_html_response := func(w http.ResponseWriter, r *http.Request) {
-		// TODO server side rendering
+		// TODO: connect to sqlite and get information
+		// TODO: add html/template with blog_page.html
+		http.ServeFile(w, r, "../frontend/blog_page.html")
 	}
 
 	leetcode_html_response := func(w http.ResponseWriter, r *http.Request) {

@@ -13,10 +13,10 @@ p {
   margin-bottom: 8em;
 }
 
-.socials-title, .resume-title {
+.socials-title, .resume-title, .portfolio-title {
   padding-left: 2em;
 }
 
-.resume-container {
+.resume-container, .portfolio-container {
   margin-bottom: 6em;
 }

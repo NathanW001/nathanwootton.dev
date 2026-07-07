@@ -1,0 +1,37 @@
+@import url(main.css);
+
+h1 {
+  color: var(--color-highlight)
+}
+
+p {
+  line-height: 1.6;
+}
+
+.intro {
+  text-align: center;
+  margin-bottom: 8em;
+}
+
+button {
+  border-radius: 8px;
+  border: 3px solid var(--color-highlight);
+  padding: 0.5em;
+}
+
+button:hover {
+  border: 3px solid var(--color-text-light);
+}
+
+button:active {
+  background-color: var(--color-highlight-dark);
+}
+
+.blog-title {
+  padding-left: 2em;
+}
+
+.blog-post-container {
+  text-align: center;
+  align-items: center;
+}

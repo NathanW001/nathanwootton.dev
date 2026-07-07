@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{.Title}}</title>
+    <link rel="stylesheet" href="/css/blog_page.css">
+  </head>
+  
+  <body>
+    <a href="/blog/"> Return to Blog</a>
+    <div class="intro">
+      <h1>{{.Title}}</h1>
+      <h4>{{.Subtitle}} - {{.Date}} - {{.Readmins}} minute read</p>
+    </div>
+
+    <div class="post-body">
+      {{range .Body}}
+        {{.}}<br>
+      {{end}}
+    </div>
+  </body>
+</html>
