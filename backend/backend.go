@@ -1,19 +1,29 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
-	"fmt"
+	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	_ "github.com/glebarez/go-sqlite"
 )
+
+type PostPreview struct {
+	Title string
+	Date  string
+	Url   string
+}
 
 type BlogPost struct {
 	Title       string
@@ -21,6 +31,15 @@ type BlogPost struct {
 	Date        string // Thought this field is the time (and stored by the db in UNIX time), passing a time.Time value to the template will give the default tostring method which looks ugly so I've chosen to convert it myself
 	Readingmins int
 	Body        []string
+}
+
+type DailyLeetcode struct {
+	Title       string
+	Subtitle    string
+	Date        string // same as above
+	Readingmins int
+	Body        []string
+	Solution    string
 }
 
 func main() {
@@ -45,8 +64,84 @@ func main() {
 	)
 
 	// Next, we lay out the fuction responses all of our possible backend calls
-	basic_response := func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Test Response.")
+	// basic_response := func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Fprintf(w, "Test Response.")
+	// }
+
+	// BACKEND RESOURSE JSON RESPONSE
+	json_response := func(w http.ResponseWriter, r *http.Request) {
+		url_path := r.URL.EscapedPath()
+		queries := r.URL.Query()
+
+		// Extract page limit from query, if not provided it will be empty string
+		page_limit := queries.Get("limit")
+		int_page_limit, err := strconv.Atoi(page_limit)
+		if err != nil {
+			log.Printf("Error, either no or malformed page limit value, defaulting to 10")
+			int_page_limit = 10
+		} else if int_page_limit > 10 {
+			http.Error(w, "page_limit MUST be <=10", 400)
+			return
+		}
+
+		// Extract page offset from query, if no provided it will be empty string
+		page_offset := queries.Get("offset")
+		int_page_offset, err := strconv.Atoi(page_offset)
+		if err != nil {
+			log.Printf("Error, either no or malformed page offset value, defaulting to 0")
+			int_page_offset = 0
+		}
+
+		// Use query and URL to collect info from database
+		var rows *sql.Rows
+		switch url_path {
+		case "/data/all/info/":
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts UNION SELECT title, date, url FROM DailyLeetcode ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+		case "/data/blog/info/":
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+		case "/data/leetcode/info/":
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM DailyLeetcode ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+		default:
+			http.Error(w, "404 resource not found", 404)
+			return
+		}
+
+		if err != nil {
+			log.Printf("Server encountered error %s in json_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
+
+		// Initialize a slice of PostPreviews and load each row into a PostPreview struct before adding it to the slice
+		rows_info := []PostPreview{}
+		defer rows.Close()
+		for rows.Next() {
+			current_row := PostPreview{}
+			var date_holder int64
+			if err := rows.Scan(&(current_row.Title), &(date_holder), &(current_row.Url)); err != nil {
+				log.Printf("Server encountered error %s in json_response", err)
+				http.Error(w, "Internal Server Error", 500)
+				return
+			}
+			current_row.Date = time.Unix(date_holder, 0).Format("Monday Jan 02, 2006")
+			rows_info = slices.Insert(rows_info, len(rows_info), current_row)
+		}
+		if err := rows.Err(); err != nil {
+			log.Printf("Server encountered error %s in json_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
+
+		// Convert everything to json and serve the content
+		json_bytes, err := json.Marshal(rows_info)
+		if err != nil {
+			log.Printf("Server encountered error %s in json_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
+
+		// TODO: in the future, may want to add the fields of how many rows were sent etc. to response
+		http.ServeContent(w, r, "response.json", time.Time{}, io.ReadSeeker(bytes.NewReader(json_bytes)))
 	}
 
 	// HTML PAGE RESPONSES
@@ -63,6 +158,7 @@ func main() {
 			http.ServeFile(w, r, "../frontend/dailyleetcode.html")
 		default:
 			http.Error(w, "404 page not found", 404)
+			return
 		}
 	}
 
@@ -148,11 +244,9 @@ func main() {
 
 	// Finally, we assign all of the relative URLs to their respective handler functions, after which we start the main server loop function. If the server ever returns (presumably because of an error) we log the error and exit the program.
 	// Backend API for site content / article comments / signboard / etc..
-	mux.HandleFunc("GET /data/all/info/", basic_response)
-	mux.HandleFunc("GET /data/blog/info/", basic_response)
-	mux.HandleFunc("GET /data/blog/content/", basic_response)
-	mux.HandleFunc("GET /data/leetcode/info/", basic_response)
-	mux.HandleFunc("GET /data/leetcode/content/", basic_response)
+	mux.HandleFunc("GET /data/all/info/", json_response)
+	mux.HandleFunc("GET /data/blog/info/", json_response)
+	mux.HandleFunc("GET /data/leetcode/info/", json_response)
 
 	mux.HandleFunc("GET /css/{filename}", css_response)
 	mux.HandleFunc("GET /assets/{filename}", asset_response)
