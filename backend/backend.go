@@ -25,6 +25,14 @@ type PostPreview struct {
 	Url   string
 }
 
+type JsonPreviewReturn struct {
+	Page_limit             int
+	Page_offset            int
+	Num_of_posts           int
+	More_content_available bool
+	Posts                  []PostPreview
+}
+
 type BlogPost struct {
 	Title       string
 	Subtitle    string
@@ -64,9 +72,6 @@ func main() {
 	)
 
 	// Next, we lay out the fuction responses all of our possible backend calls
-	// basic_response := func(w http.ResponseWriter, r *http.Request) {
-	// 	fmt.Fprintf(w, "Test Response.")
-	// }
 
 	// BACKEND RESOURSE JSON RESPONSE
 	json_response := func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +82,7 @@ func main() {
 		page_limit := queries.Get("limit")
 		int_page_limit, err := strconv.Atoi(page_limit)
 		if err != nil {
-			log.Printf("Error, either no or malformed page limit value, defaulting to 10")
+			log.Printf("either no or malformed page limit value, defaulting to 10")
 			int_page_limit = 10
 		} else if int_page_limit > 10 {
 			http.Error(w, "page_limit MUST be <=10", 400)
@@ -88,7 +93,7 @@ func main() {
 		page_offset := queries.Get("offset")
 		int_page_offset, err := strconv.Atoi(page_offset)
 		if err != nil {
-			log.Printf("Error, either no or malformed page offset value, defaulting to 0")
+			log.Printf("either no or malformed page offset value, defaulting to 0")
 			int_page_offset = 0
 		}
 
@@ -96,11 +101,11 @@ func main() {
 		var rows *sql.Rows
 		switch url_path {
 		case "/data/all/info/":
-			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts UNION SELECT title, date, url FROM DailyLeetcode ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts UNION SELECT title, date, url FROM DailyLeetcode ORDER BY date DESC LIMIT $1 OFFSET $2", int_page_limit, int_page_offset*int_page_limit)
 		case "/data/blog/info/":
-			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM BlogPosts ORDER BY date DESC LIMIT $1 OFFSET $2", int_page_limit, int_page_offset*int_page_limit)
 		case "/data/leetcode/info/":
-			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM DailyLeetcode ORDER BY date LIMIT $1 OFFSET $2", int_page_limit, int_page_offset)
+			rows, err = db.QueryContext(r.Context(), "SELECT title, date, url FROM DailyLeetcode ORDER BY date DESC LIMIT $1 OFFSET $2", int_page_limit, int_page_offset*int_page_limit)
 		default:
 			http.Error(w, "404 resource not found", 404)
 			return
@@ -132,8 +137,17 @@ func main() {
 			return
 		}
 
+		// Put everything into a struct before we convert to json
+		json_content_wrapper := JsonPreviewReturn{
+			Page_limit:             int_page_limit,
+			Page_offset:            int_page_offset,
+			Num_of_posts:           len(rows_info),
+			More_content_available: (len(rows_info) == int_page_limit),
+			Posts:                  rows_info,
+		}
+
 		// Convert everything to json and serve the content
-		json_bytes, err := json.Marshal(rows_info)
+		json_bytes, err := json.Marshal(json_content_wrapper)
 		if err != nil {
 			log.Printf("Server encountered error %s in json_response", err)
 			http.Error(w, "Internal Server Error", 500)
@@ -203,12 +217,49 @@ func main() {
 			http.Error(w, "Internal Server Error", 500)
 			return
 		}
-
-		// http.ServeFile(w, r, "../frontend/index.html")
 	}
 
 	leetcode_html_response := func(w http.ResponseWriter, r *http.Request) {
+		url_path := r.URL.EscapedPath()
+		article_url_name := strings.Split(url_path, "/")[2]
 
+		post := DailyLeetcode{}
+		var temp_date_hold int64  // Stored in UNIX time in db, we have to convert it
+		var temp_body_hold string // Similar, but stored using \n to break paragraphs so we need to split it up into the arr
+		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body, solution FROM DailyLeetcode WHERE url = $1", article_url_name).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold), &(post.Solution))
+		if err != nil {
+			if err == sql.ErrNoRows {
+				http.Error(w, "No post found", 404)
+				return
+			} else {
+				log.Printf("Server encountered error %s in leetcode_html_response", err)
+				http.Error(w, "Internal Server Error", 500)
+				return
+			}
+		}
+		post.Date = time.Unix(temp_date_hold, 0).Format("Monday Jan 02, 2006")
+		post.Body = strings.Split(temp_body_hold, `\n`)
+
+		template_content, err := os.ReadFile("../frontend/daily_leetcode_page.html")
+		if err != nil {
+			log.Printf("Server encountered error %s in leetcode_html_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
+
+		response_template, err := template.New("blog_response").Parse(string(template_content))
+		if err != nil {
+			log.Printf("Server encountered error %s in leetcode_html_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
+
+		err = response_template.Execute(w, post)
+		if err != nil {
+			log.Printf("Server encountered error %s in leetcode_html_response", err)
+			http.Error(w, "Internal Server Error", 500)
+			return
+		}
 	}
 
 	//CSS GENERIC RESPONSE
