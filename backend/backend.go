@@ -65,7 +65,7 @@ func main() {
 
 	// Since in the case where the file doesn't exist it creates a new one, we must also guarentee that all of our tables are created within the DB. Also helps to spell them out explicitly for future reference.
 	db.ExecContext(context.Background(),
-		"CREATE TABLE IF NOT EXISTS BlogPosts (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, readingmins INTEGER, body TEXT)",
+		"CREATE TABLE IF NOT EXISTS BlogPosts (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, readingmins INTEGER, body TEXT)", // TODO remove readingmins
 	)
 	db.ExecContext(context.Background(),
 		"CREATE TABLE IF NOT EXISTS DailyLeetcode (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, readingmins INTEGER, body TEXT, solution TEXT)",
@@ -178,12 +178,11 @@ func main() {
 
 	blog_html_response := func(w http.ResponseWriter, r *http.Request) {
 		url_path := r.URL.EscapedPath()
-		article_url_name := strings.Split(url_path, "/")[2]
 
 		post := BlogPost{}
 		var temp_date_hold int64  // Stored in UNIX time in db, we have to convert it
 		var temp_body_hold string // Similar, but stored using \n to break paragraphs so we need to split it up into the arr
-		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body FROM BlogPosts WHERE url = $1", article_url_name).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold))
+		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body FROM BlogPosts WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold))
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "No post found", 404)
@@ -221,12 +220,11 @@ func main() {
 
 	leetcode_html_response := func(w http.ResponseWriter, r *http.Request) {
 		url_path := r.URL.EscapedPath()
-		article_url_name := strings.Split(url_path, "/")[2]
 
 		post := DailyLeetcode{}
 		var temp_date_hold int64  // Stored in UNIX time in db, we have to convert it
 		var temp_body_hold string // Similar, but stored using \n to break paragraphs so we need to split it up into the arr
-		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body, solution FROM DailyLeetcode WHERE url = $1", article_url_name).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold), &(post.Solution))
+		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body, solution FROM DailyLeetcode WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold), &(post.Solution))
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "No post found", 404)
@@ -239,8 +237,9 @@ func main() {
 		}
 		post.Date = time.Unix(temp_date_hold, 0).Format("Monday Jan 02, 2006")
 		post.Body = strings.Split(temp_body_hold, `\n`)
+		post.Solution = strings.ReplaceAll(strings.ReplaceAll(post.Solution, "\\n", "\n"), "\\t", "\t")
 
-		template_content, err := os.ReadFile("../frontend/daily_leetcode_page.html")
+		template_content, err := os.ReadFile("../frontend/dailyleetcode_page.html")
 		if err != nil {
 			log.Printf("Server encountered error %s in leetcode_html_response", err)
 			http.Error(w, "Internal Server Error", 500)
@@ -322,7 +321,7 @@ func main() {
 	mux.HandleFunc("GET /blog/{blog_post}/{$}", blog_html_response)
 
 	mux.HandleFunc("GET /dailyleetcode/{$}", basic_html_response) // daily leetcode
-	mux.HandleFunc("GET /dailyleetcode/{date}/{$}", leetcode_html_response)
+	mux.HandleFunc("GET /dailyleetcode/{leetcode_post}/{$}", leetcode_html_response)
 
 	log.Fatal(server.ListenAndServe())
 }
