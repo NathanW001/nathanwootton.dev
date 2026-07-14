@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>{{.Title}}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/themes/prism-twilight.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <link rel="stylesheet" href="/css/dailyleetcode_page.css">
+  </head>
+  
+  <body>
+    <a href="/dailyleetcode/"> Return to Daily Leetcode</a>
+    <div class="intro">
+      <h1>{{.Title}}</h1>
+      <h4>{{.Subtitle}} - {{.Date}}</p>
+    </div>
+
+    <div class="post-body">
+      <h3>Today's Solution:</h3>
+      <pre class="line-numbers leetcode-solution"><code class="language-python">{{.Solution}}</pre></code>
+      <h3>Commentary:</h3>
+      {{range .Body}}
+        {{.}}<br><br>
+      {{end}}
+    </div>
+  </body>
+</html>
