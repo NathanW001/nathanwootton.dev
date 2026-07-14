@@ -22,7 +22,7 @@ import (
 type PostPreview struct {
 	Title string
 	Date  string
-	Url   string
+	Url   string // URL should be the full url, e.g. /blog/<post>/ instead of just <post>
 }
 
 type JsonPreviewReturn struct {
@@ -272,6 +272,16 @@ func main() {
 		http.ServeFile(w, r, "../frontend/css/"+css_file)
 	}
 
+	//JS GENERIC RESPONSE
+	js_response := func(w http.ResponseWriter, r *http.Request) {
+		js_file := r.PathValue("filename")
+		if !regexp.MustCompile(`^[\w-_]+\.js$`).MatchString(js_file) {
+			http.Error(w, "invalid js file", 400)
+			return
+		}
+		http.ServeFile(w, r, "../frontend/js/"+js_file)
+	}
+
 	//ASSET GENERIC RESPONSE
 	asset_response := func(w http.ResponseWriter, r *http.Request) {
 		asset_file := r.PathValue("filename")
@@ -300,6 +310,7 @@ func main() {
 	mux.HandleFunc("GET /data/leetcode/info/", json_response)
 
 	mux.HandleFunc("GET /css/{filename}", css_response)
+	mux.HandleFunc("GET /js/{filename}", js_response)
 	mux.HandleFunc("GET /assets/{filename}", asset_response)
 
 	// Frontend pages, HTML response

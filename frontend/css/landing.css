@@ -62,3 +62,24 @@ button:hover {
 button:active {
   background-color: var(--color-highlight-dark);
 }
+
+.recent-posting {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border: 2px solid var(--color-highlight-dark);
+  border-radius: 8px;
+  color: var(--color-text-light);
+  cursor: pointer;
+  margin: 1em;
+  padding: 10px;
+}
+
+.recent-posting:hover {
+  background-color: var(--color-highlight-dark);
+}
+
+.recent-posting:hover > * {
+  background-color: var(--color-highlight-dark);
+  color: var(--color-text-light)
+}
