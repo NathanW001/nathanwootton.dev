@@ -34,20 +34,18 @@ type JsonPreviewReturn struct {
 }
 
 type BlogPost struct {
-	Title       string
-	Subtitle    string
-	Date        string // Thought this field is the time (and stored by the db in UNIX time), passing a time.Time value to the template will give the default tostring method which looks ugly so I've chosen to convert it myself
-	Readingmins int
-	Body        []string
+	Title    string
+	Subtitle string
+	Date     string // Thought this field is the time (and stored by the db in UNIX time), passing a time.Time value to the template will give the default tostring method which looks ugly so I've chosen to convert it myself
+	Body     []string
 }
 
 type DailyLeetcode struct {
-	Title       string
-	Subtitle    string
-	Date        string // same as above
-	Readingmins int
-	Body        []string
-	Solution    string
+	Title    string
+	Subtitle string
+	Date     string // same as above
+	Body     []string
+	Solution string
 }
 
 func main() {
@@ -65,10 +63,10 @@ func main() {
 
 	// Since in the case where the file doesn't exist it creates a new one, we must also guarentee that all of our tables are created within the DB. Also helps to spell them out explicitly for future reference.
 	db.ExecContext(context.Background(),
-		"CREATE TABLE IF NOT EXISTS BlogPosts (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, readingmins INTEGER, body TEXT)", // TODO remove readingmins
+		"CREATE TABLE IF NOT EXISTS BlogPosts (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, body TEXT)",
 	)
 	db.ExecContext(context.Background(),
-		"CREATE TABLE IF NOT EXISTS DailyLeetcode (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, readingmins INTEGER, body TEXT, solution TEXT)",
+		"CREATE TABLE IF NOT EXISTS DailyLeetcode (title TEXT PRIMARY KEY, url TEXT, subtitle TEXT, date INTEGER, body TEXT, solution TEXT)",
 	)
 
 	// Next, we lay out the fuction responses all of our possible backend calls
@@ -182,7 +180,7 @@ func main() {
 		post := BlogPost{}
 		var temp_date_hold int64  // Stored in UNIX time in db, we have to convert it
 		var temp_body_hold string // Similar, but stored using \n to break paragraphs so we need to split it up into the arr
-		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body FROM BlogPosts WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold))
+		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, body FROM BlogPosts WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(temp_body_hold))
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "No post found", 404)
@@ -224,7 +222,7 @@ func main() {
 		post := DailyLeetcode{}
 		var temp_date_hold int64  // Stored in UNIX time in db, we have to convert it
 		var temp_body_hold string // Similar, but stored using \n to break paragraphs so we need to split it up into the arr
-		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, readingmins, body, solution FROM DailyLeetcode WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(post.Readingmins), &(temp_body_hold), &(post.Solution))
+		err := db.QueryRowContext(r.Context(), "SELECT title, subtitle, date, body, solution FROM DailyLeetcode WHERE url = $1", url_path).Scan(&(post.Title), &(post.Subtitle), &(temp_date_hold), &(temp_body_hold), &(post.Solution))
 		if err != nil {
 			if err == sql.ErrNoRows {
 				http.Error(w, "No post found", 404)
@@ -285,7 +283,7 @@ func main() {
 	asset_response := func(w http.ResponseWriter, r *http.Request) {
 		asset_file := r.PathValue("filename")
 		if !regexp.MustCompile(`^[\w-_]+\.[\w]+$`).MatchString(asset_file) {
-			http.Error(w, "invalid css file", 400)
+			http.Error(w, "invalid file", 400)
 			return
 		}
 		http.ServeFile(w, r, "../frontend/assets/"+asset_file)
@@ -295,7 +293,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	server := &http.Server{
-		Addr:           ":42309",
+		Addr:           ":8080",
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
