@@ -42,4 +42,7 @@ button:active {
 .leetcode-solution * {
   background-color: var(--color-bg-light);
   text-shadow: none !important;
+  line-height: 24px;
+  font-size: 16px;
+  font-family: 'Consolas','Monaco','Andale Mono',monospace;
 }
