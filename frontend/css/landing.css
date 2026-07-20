@@ -1,5 +1,3 @@
-@import url(main.css);
-
 h1 {
   color: var(--color-highlight)
 }
@@ -82,4 +80,27 @@ button:active {
 .recent-posting:hover > * {
   background-color: var(--color-highlight-dark);
   color: var(--color-text-light)
+}
+
+.landing {
+  margin-left: 8em;
+  margin-right: 8em;
+  margin-top: 50px;
+}
+
+@media only screen and (max-width:1000px) {
+  .landing {
+    margin-left: 50px;
+    margin-right: 50px;
+  }
+
+  .site-nav {
+    margin-right: 0px;
+    margin-left: 0px;
+  }
+
+  .recent-posts {
+    margin-right: 0px;
+    margin-left: 0px;
+  }
 }

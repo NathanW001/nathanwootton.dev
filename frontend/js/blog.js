@@ -7,7 +7,6 @@ $(document).ready(() => {
       url: "/data/blog/info/?limit=" + page_limit + "&offset=" + page_offset,
       method: "GET",
       success: (data) => {
-        console.log(data)
         for (let i = 0 ; i < data.Posts.length ; i++) {
           new_post = $('<div> <h4>' + data.Posts[i].Title + '</h4> <h5>' + data.Posts[i].Date + '</h5> </div>')
           new_post.on("click", () => {location.href = data.Posts[i].Url})
